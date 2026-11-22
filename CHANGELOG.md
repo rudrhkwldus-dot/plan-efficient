@@ -16,6 +16,9 @@ English | [한국어](#한국어)
 - Budget level drops one step when weekly usage is 80% or more.
 - `--used` is now only a fallback for when server values aren't available.
 
+### License
+- 1.1 is free to use, modify, and share, but **may not be sold**. See `LICENSE`. 1.0 stays MIT.
+
 ### Notes
 - Server values exist only for Pro/Max subscribers, after the first reply in a session. Otherwise 1.1 behaves like 1.0.
 - The status line refresh takes about 0.25 s longer on Windows (Git Bash).
@@ -41,6 +44,9 @@ English | [한국어](#한국어)
 **변경**
 - 주간 사용량이 80% 이상이면 예산 등급을 한 단계 낮춥니다.
 - `--used`는 서버 값이 없을 때만 쓰는 대체 입력이 됐습니다.
+
+**라이선스**
+- 1.1은 무료로 쓰고, 고치고, 나눠 줄 수 있지만 **판매는 금지**입니다. `LICENSE`를 보세요. 1.0은 MIT 그대로입니다.
 
 **참고**
 - 서버 값은 Pro/Max 구독자에게만, 세션의 첫 응답 이후에만 있습니다. 값이 없으면 1.0과 같이 동작합니다.

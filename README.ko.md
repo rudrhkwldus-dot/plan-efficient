@@ -8,10 +8,10 @@ Claude Code용 `/plan`. 헛도는 반복은 빼고 필요한 검증은 남긴 �
 
 두 버전을 모두 받을 수 있습니다. 원하는 쪽을 고르세요. 자세한 변경 내역은 [CHANGELOG.md](CHANGELOG.md#한국어)에 있습니다.
 
-| 버전 | 이럴 때 | 다운로드 |
-|---|---|---|
-| **1.1** (최신) | 서버가 계산한 정확한 5시간·주간 %, 리셋까지 남은 시간, 자동 보정을 원할 때. 상태줄에 작은 래퍼를 넣을지 한 번 묻습니다(백업하고, 되돌릴 수 있음) | [v1.1.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.1.zip) |
-| 1.0 | 추정치만 있으면 되고 설정 파일을 건드리고 싶지 않을 때 | [v1.0.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.0.zip) |
+| 버전 | 이럴 때 | 라이선스 | 다운로드 |
+|---|---|---|---|
+| **1.1** (최신) | 서버가 계산한 정확한 5시간·주간 %, 리셋까지 남은 시간, 자동 보정을 원할 때. 상태줄에 작은 래퍼를 넣을지 한 번 묻습니다(백업하고, 되돌릴 수 있음) | 무료 사용, 판매 금지 | [v1.1.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.1.zip) |
+| 1.0 | 추정치만 있으면 되고 설정 파일을 건드리고 싶지 않을 때 | MIT | [v1.0.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.0.zip) |
 
 특정 버전만 받기: `git clone --branch v1.0 https://github.com/rudrhkwldus-dot/plan-efficient.git`
 
@@ -67,4 +67,6 @@ Anthropic은 5시간 한도를 토큰 수로 공개하지 않습니다. 그래�
 
 ## 라이선스
 
-저작권자 전용(All rights reserved). 구매자 본인만 쓸 수 있고, 재배포와 재판매는 허용하지 않습니다. 자세한 내용은 [LICENSE](LICENSE)에 있습니다. ECC에서 가져온 부분은 계속 MIT License를 따릅니다([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).
+- **1.1**(이 버전): 업무 용도까지 포함해 무료로 쓰고, 고치고, 나눠 줄 수 있습니다. **판매는 할 수 없습니다.** 재판매, 유료 마켓 등록, 유료 상품에 넣는 것이 모두 금지입니다. 자세한 내용은 [LICENSE](LICENSE)에 있습니다.
+- **1.0**: MIT.
+- ECC에서 가져온 부분은 계속 MIT License를 따릅니다([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).

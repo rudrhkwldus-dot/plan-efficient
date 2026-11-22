@@ -10,10 +10,10 @@ The skill's instructions are written in Korean, so the plans it produces are in 
 
 Both versions stay available. Pick the one you want. Full details are in [CHANGELOG.md](CHANGELOG.md).
 
-| Version | Choose it if | Download |
-|---|---|---|
-| **1.1** (latest) | You want the exact 5-hour and weekly % from the server, time until reset, and automatic calibration. It asks once to add a small wrapper to your status line (backed up, reversible). | [v1.1.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.1.zip) |
-| 1.0 | You only want estimates and don't want any settings touched. | [v1.0.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.0.zip) |
+| Version | Choose it if | License | Download |
+|---|---|---|---|
+| **1.1** (latest) | You want the exact 5-hour and weekly % from the server, time until reset, and automatic calibration. It asks once to add a small wrapper to your status line (backed up, reversible). | Free to use, no selling | [v1.1.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.1.zip) |
+| 1.0 | You only want estimates and don't want any settings touched. | MIT | [v1.0.zip](https://github.com/rudrhkwldus-dot/plan-efficient/archive/refs/tags/v1.0.zip) |
 
 To clone a specific version: `git clone --branch v1.0 https://github.com/rudrhkwldus-dot/plan-efficient.git`
 
@@ -69,4 +69,6 @@ Adapted from the `/plan` and `/model-route` commands in [ECC](https://github.com
 
 ## License
 
-Proprietary. All rights reserved. Use is limited to licensed purchasers; redistribution and resale are not allowed. See [LICENSE](LICENSE). The ECC-derived portions remain under the MIT License ([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).
+- **1.1** (this version): free to use, modify, and share, including at work. **Selling it is not allowed**: no resale, paid marketplaces, or paid products. See [LICENSE](LICENSE).
+- **1.0**: MIT.
+- The ECC-derived portions stay under the MIT License ([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).

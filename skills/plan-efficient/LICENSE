@@ -1,62 +1,22 @@
-plan-efficient 라이선스 / License
+plan-efficient License (free to use, no selling)
 
-Copyright (c) 2026 Gyeong Mun. All rights reserved.
-
-[한국어]
-
-1. 권리 보유
-   이 소프트웨어(plan-efficient 스킬, 스크립트, 문서를 포함한다)의 저작권은
-   저작권자에게 있다. 아래 3항의 제3자 부분을 빼고, 이 라이선스가 명시적으로
-   허락하지 않은 모든 권리는 저작권자가 가진다.
-
-2. 사용 허락
-   저작권자에게서 구매했거나 서면으로 허락받은 사람(이하 "사용자")은
-   다음을 할 수 있다.
-   - 본인의 작업을 위해 본인이 사용하는 기기에 설치하고 사용하는 것
-   - 본인이 쓰기 위해 고치는 것
-   공개 저장소 등에서 소스를 보거나 내려받을 수 있다는 사실만으로는 사용 허락이
-   생기지 않는다.
-
-3. 제3자 부분
-   이 소프트웨어의 일부는 ECC(https://github.com/affaan-m/ECC)를 바탕으로
-   만들었으며, 그 부분은 MIT License(Copyright (c) 2026 Affaan Mustafa)를 따른다.
-   원문은 skills/plan-efficient/LICENSE-ECC에 있다. 이 라이선스는 그 부분에
-   대한 MIT License의 권리를 제한하지 않는다.
-
-4. 금지
-   저작권자의 사전 서면 허락 없이 다음을 해서는 안 된다.
-   - 이 소프트웨어나 고친 버전을 복제해 다른 사람에게 배포, 공유, 공개하는 것
-   - 판매, 재판매, 대여, 재라이선스하는 것
-   - 이 소프트웨어를 다른 상품이나 서비스에 넣어 제공하는 것
-   - 저작권 표시와 이 라이선스 문구를 지우거나 바꾸는 것
-
-5. 보증 없음과 책임 제한
-   이 소프트웨어는 "있는 그대로" 제공된다. 상품성, 특정 목적 적합성,
-   정확성(사용량 추정치를 포함한다)에 대한 어떤 보증도 하지 않는다.
-   법이 허용하는 범위에서, 저작권자는 이 소프트웨어의 사용으로 생긴
-   손해에 책임지지 않는다.
-
-6. 종료
-   사용자가 이 라이선스를 어기면 사용 허락은 자동으로 끝난다. 이때 사용자는
-   가지고 있는 모든 복사본을 지워야 한다.
-
-7. 문의
-   rudrhkwldus@gmail.com
+Copyright (c) 2026 Gyeong Mun
 
 [English]
 
 1. Ownership
-   This software (the plan-efficient skill, scripts, and documentation) is owned
-   by the copyright holder. Except for the third-party portions in section 3,
-   all rights not expressly granted by this license are reserved.
+   The copyright holder owns this software (the plan-efficient skill, scripts,
+   and documentation). Except for the third-party portions in section 3, all
+   rights not expressly granted below are reserved.
 
-2. License grant
-   A person who purchased this software from the copyright holder, or received
-   written permission ("User"), may:
-   - install and use it on devices the User uses, for the User's own work
-   - modify it for the User's own use
-   Being able to view or download the source from a public repository or
-   elsewhere does not, by itself, grant any license to use it.
+2. What you may do, free of charge
+   Anyone may:
+   - use this software, for personal use or at work, including paid work
+     where the software is only a tool you use
+   - modify it
+   - share copies or modified versions with others free of charge
+   When you share it, you must keep this copyright notice and this license,
+   and mark modified versions as modified.
 
 3. Third-party portions
    Portions of this software are based on ECC (https://github.com/affaan-m/ECC)
@@ -64,12 +24,12 @@ Copyright (c) 2026 Gyeong Mun. All rights reserved.
    The full text is in skills/plan-efficient/LICENSE-ECC. This license does not
    restrict any rights the MIT License grants for those portions.
 
-4. Restrictions
-   Without the copyright holder's prior written permission, the User may not:
-   - copy, distribute, share, or publish this software or a modified version
-   - sell, resell, rent, or sublicense it
-   - include it in another product or service
-   - remove or alter the copyright notice or this license
+4. No selling
+   Without the copyright holder's prior written permission, you may not:
+   - sell, resell, rent, or license this software or a modified version for a fee
+   - distribute it through a paid marketplace, or charge for access to it,
+     downloading it, or installing it
+   - include it in a product or service that is sold or paid for
 
 5. No warranty; limitation of liability
    THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, INCLUDING
@@ -78,11 +38,51 @@ Copyright (c) 2026 Gyeong Mun. All rights reserved.
    LIABLE FOR ANY DAMAGES ARISING FROM ITS USE.
 
 6. Termination
-   This license ends automatically if the User breaches it. The User must then
-   delete all copies.
+   If you breach this license, your rights under it end automatically.
 
 7. Contact
    rudrhkwldus@gmail.com
 
-If the Korean and English versions conflict, the English version prevails.
-한국어와 영어 내용이 다르면 영어를 따른다.
+[한국어]
+
+1. 권리 보유
+   이 소프트웨어(plan-efficient 스킬, 스크립트, 문서를 포함한다)의 저작권은
+   저작권자에게 있다. 아래 3항의 제3자 부분을 빼고, 아래에서 명시적으로
+   허락하지 않은 모든 권리는 저작권자가 가진다.
+
+2. 무료로 할 수 있는 것
+   누구나 다음을 할 수 있다.
+   - 개인 용도나 업무에 쓰는 것. 이 소프트웨어를 도구로만 쓰는 유료 작업도
+     포함한다
+   - 고치는 것
+   - 복사본이나 고친 버전을 다른 사람에게 무료로 나눠 주는 것
+   나눠 줄 때는 이 저작권 표시와 라이선스를 함께 넣고, 고친 버전에는 고쳤다고
+   표시해야 한다.
+
+3. 제3자 부분
+   이 소프트웨어의 일부는 ECC(https://github.com/affaan-m/ECC)를 바탕으로
+   만들었으며, 그 부분은 MIT License(Copyright (c) 2026 Affaan Mustafa)를 따른다.
+   원문은 skills/plan-efficient/LICENSE-ECC에 있다. 이 라이선스는 그 부분에
+   대한 MIT License의 권리를 제한하지 않는다.
+
+4. 판매 금지
+   저작권자의 사전 서면 허락 없이 다음을 해서는 안 된다.
+   - 이 소프트웨어나 고친 버전을 돈을 받고 팔거나, 재판매하거나, 대여하거나,
+     유료로 라이선스하는 것
+   - 유료 마켓에서 배포하거나, 이용·다운로드·설치에 돈을 받는 것
+   - 판매하거나 돈을 받는 상품이나 서비스에 넣는 것
+
+5. 보증 없음과 책임 제한
+   이 소프트웨어는 "있는 그대로" 제공된다. 상품성, 특정 목적 적합성,
+   정확성(사용량 추정치를 포함한다)에 대한 어떤 보증도 하지 않는다.
+   법이 허용하는 범위에서, 저작권자는 이 소프트웨어의 사용으로 생긴
+   손해에 책임지지 않는다.
+
+6. 종료
+   이 라이선스를 어기면 이 라이선스에 따른 권리는 자동으로 끝난다.
+
+7. 문의
+   rudrhkwldus@gmail.com
+
+If the English and Korean versions conflict, the English version prevails.
+영어와 한국어 내용이 다르면 영어를 따른다.
