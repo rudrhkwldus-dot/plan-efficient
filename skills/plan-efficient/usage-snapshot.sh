@@ -3,6 +3,8 @@
 #
 # Claude Code가 상태줄 명령에 stdin으로 넘기는 세션 JSON에서
 # 서버가 계산한 사용량(5h / 7d %)과 리셋 시각을 usage.json 에 저장한다.
+# 개인 파일은 스킬 폴더 밖(~/.claude/plan-efficient/)에 둔다. 스킬을 새 버전으로
+# 덮어써도 지워지지 않게 하기 위해서다.
 # 그다음 원래 쓰던 상태줄 명령(statusline-original.txt)에 같은 입력을 넘겨
 # 화면은 예전과 똑같이 둔다. 원래 명령이 없으면 짧은 사용량 한 줄을 보여 준다.
 #
@@ -11,8 +13,12 @@
 
 input=$(cat)
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-out="$dir/usage.json"
-orig_file="$dir/statusline-original.txt"
+state="${PLAN_EFFICIENT_HOME:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plan-efficient}"
+mkdir -p "$state" 2>/dev/null
+out="$state/usage.json"
+orig_file="$state/statusline-original.txt"
+# 1.1에서 올라왔고 아직 옮기지 않았으면 예전 위치(스킬 폴더)를 쓴다
+[ ! -f "$orig_file" ] && [ -f "$dir/statusline-original.txt" ] && orig_file="$dir/statusline-original.txt"
 now=$(date +%s)
 orig=""
 [ -f "$orig_file" ] && orig=$(cat "$orig_file")

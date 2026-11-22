@@ -4,7 +4,11 @@
 #   bash install.sh status     # installed | not-installed | no-settings
 #   bash install.sh install    # settings.json 백업 후 statusLine 을 래퍼로 감싼다
 #   bash install.sh uninstall  # 원래 statusLine 으로 되돌린다
+#   bash install.sh usage      # 스킬이 읽는 요약(key=value). 개인 파일 이전·생성도 함께 한다
+#   bash install.sh migrate    # 1.1의 개인 파일을 스킬 폴더 밖으로 옮긴다
 #
+# 개인 파일(budget.md, usage.json, statusline-original.txt)은 스킬 폴더 밖의
+# ~/.claude/plan-efficient/ 에 둔다. 스킬을 덮어써도 남는다.
 # 원래 statusLine.command 는 statusline-original.txt 에 옮겨 두고,
 # usage-snapshot.sh 가 같은 입력으로 그 명령을 그대로 실행한다.
 # settings.json 편집 도구 순서: jq → Python. 둘 다 없으면 수동 안내를 출력한다.
@@ -13,7 +17,23 @@ set -u
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 settings="$cfg/settings.json"
-orig_file="$dir/statusline-original.txt"
+state="${PLAN_EFFICIENT_HOME:-$cfg/plan-efficient}"
+orig_file="$state/statusline-original.txt"
+template="$dir/references/budget-template.md"
+
+# 1.1은 개인 파일을 스킬 폴더 안에 두었다. 새 위치에 없을 때만 옮긴다(덮어쓰지 않음).
+migrate() {
+  local f moved=""
+  mkdir -p "$state" || return 1
+  for f in budget.md statusline-original.txt usage.json; do
+    if [ -f "$dir/$f" ] && [ ! -e "$state/$f" ]; then
+      mv "$dir/$f" "$state/$f" && moved="$moved $f"
+    fi
+  done
+  # usage.json 은 캐시라 새 위치에 이미 있으면 예전 것을 지운다
+  [ -f "$dir/usage.json" ] && [ -f "$state/usage.json" ] && rm -f "$dir/usage.json"
+  echo "${moved# }"
+}
 # 홈 폴더 아래이고 경로에 공백이 없으면 ~ 형태로 쓴다(기기 이름에 덜 묶임)
 case "$dir" in
   "$HOME"/*) rel="~${dir#"$HOME"}" ;;
@@ -93,9 +113,14 @@ EOF
 case "${1:-status}" in
   usage)
     # 스킬이 읽는 요약. key=value 한 줄씩. 값이 없으면 그 줄을 비운다.
-    usage_file="$dir/usage.json"
+    usage_file="$state/usage.json"
     st=$("$0" status)
     echo "status=$st"
+    echo "state_dir=$state"
+    m=$(migrate); [ -n "$m" ] && echo "migrated=$m"
+    if [ -f "$state/budget.md" ]; then echo "settings=present"
+    elif [ -f "$template" ] && cp "$template" "$state/budget.md"; then echo "settings=created"
+    else echo "settings=missing"; fi
     [ -f "$usage_file" ] || { echo "snapshot=none"; exit 0; }
     now=$(date +%s)
     if have_jq && jq -e . "$usage_file" >/dev/null 2>&1; then
@@ -137,7 +162,11 @@ print("cost_usd=%s" % nz((d.get("cost") or {}).get("total_cost_usd")))
     cur=$(get_cmd) || { echo "unknown (jq/python 없음)"; exit 0; }
     case "$cur" in *usage-snapshot.sh*) echo "installed" ;; *) echo "not-installed" ;; esac
     ;;
+  migrate)
+    m=$(migrate); echo "state_dir=$state"; echo "migrated=${m:-(없음)}"
+    ;;
   install)
+    migrate >/dev/null
     cur=$(get_cmd) || { manual; exit 2; }
     case "$cur" in *usage-snapshot.sh*) echo "이미 설치되어 있습니다."; exit 0 ;; esac
     if [ -f "$settings" ]; then
@@ -148,7 +177,7 @@ print("cost_usd=%s" % nz((d.get("cost") or {}).get("total_cost_usd")))
     printf '%s' "$cur" > "$orig_file"
     if set_cmd "$wrapper_cmd"; then
       echo "설치 완료. 원래 상태줄: ${cur:-(없음)}"
-      echo "다음 응답부터 $dir/usage.json 에 사용량이 저장됩니다."
+      echo "다음 응답부터 $state/usage.json 에 사용량이 저장됩니다."
     else
       echo "settings.json 을 고치지 못했습니다. 백업은 그대로 있습니다."; exit 1
     fi
@@ -156,11 +185,12 @@ print("cost_usd=%s" % nz((d.get("cost") or {}).get("total_cost_usd")))
   uninstall)
     cur=$(get_cmd) || { echo "jq/python 이 없어 자동 제거를 못 합니다. 백업 파일로 되돌려 주세요."; exit 2; }
     case "$cur" in *usage-snapshot.sh*) ;; *) echo "설치되어 있지 않습니다."; exit 0 ;; esac
+    migrate >/dev/null
     orig=""; [ -f "$orig_file" ] && orig=$(cat "$orig_file")
     set_cmd "$orig" || { echo "settings.json 을 고치지 못했습니다."; exit 1; }
-    rm -f "$orig_file" "$dir/usage.json"
+    rm -f "$orig_file" "$state/usage.json"   # budget.md(보정 기록)는 남긴다
     echo "제거 완료. 상태줄: ${orig:-(없음)}"
     ;;
   *)
-    echo "사용법: bash install.sh [status|install|uninstall]"; exit 1 ;;
+    echo "사용법: bash install.sh [status|install|uninstall|usage|migrate]"; exit 1 ;;
 esac
