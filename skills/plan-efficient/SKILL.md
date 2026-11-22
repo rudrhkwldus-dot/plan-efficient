@@ -44,7 +44,7 @@ bash "{dir}/install.sh" usage
 
 - If it can't run (no bash, not Claude Code, permission denied), continue with estimates only and write "server values unavailable". Don't look for other sources.
 - It prints `key=value` lines, including `state_dir`. Read `{state_dir}/budget.md`.
-- **Normal case**: `status=installed`, `snapshot=ok`, `age_sec` ≤ 900, `settings=present`, and `plan:` is set. Use `five_hour_pct`, `seven_day_pct`, and `*_resets_in_sec`. A window with `resets_in_sec` ≤ 0 has reset since the snapshot: treat it as 0%.
+- **Normal case**: `status=installed`, `snapshot=ok`, `age_sec` ≤ 900, `settings=present`, and `plan:` is set. Use `five_hour_pct`, `seven_day_pct`, and `*_resets_in_sec`. A window with `resets_in_sec` ≤ 0 has reset since the snapshot: treat it as 0%. If `over` is not `none`, usage is past the shared stop threshold (`five_hour_stop` / `seven_day_stop`): say so and put a checkpoint first.
 - **Anything else** (first run, `plan: unset`, not installed, stale or unparsed snapshot, `migrated=`): read `references/setup.md` and follow it.
 
 ## Step 1: evidence (bounded)
