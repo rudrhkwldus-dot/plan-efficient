@@ -6,6 +6,17 @@ A `/plan` for Claude Code that skips pointless retry loops but keeps the checks 
 
 The skill's instructions are written in Korean, so the plans it produces are in Korean.
 
+## Versions
+
+This repository is **plan-efficient 1.0**: free, MIT-licensed. It estimates usage against the 5-hour limit and you enter your current usage with `--used`.
+
+**1.1** is a paid version. It adds:
+- exact 5-hour and weekly usage from the server, shown separately, with time until each reset
+- automatic calibration from before/after usage
+- a lower budget level when weekly usage is high
+
+1.1 will be available on Agensi soon.
+
 ## Install
 
 Copy the `skills/plan-efficient` folder into your Claude Code skills folder.
