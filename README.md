@@ -69,4 +69,4 @@ Adapted from the `/plan` and `/model-route` commands in [ECC](https://github.com
 
 ## License
 
-[MIT](LICENSE)
+Proprietary. All rights reserved. Use is limited to licensed purchasers; redistribution and resale are not allowed. See [LICENSE](LICENSE). The ECC-derived portions remain under the MIT License ([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).

@@ -67,4 +67,4 @@ Anthropic은 5시간 한도를 토큰 수로 공개하지 않습니다. 그래�
 
 ## 라이선스
 
-[MIT](LICENSE)
+저작권자 전용(All rights reserved). 구매자 본인만 쓸 수 있고, 재배포와 재판매는 허용하지 않습니다. 자세한 내용은 [LICENSE](LICENSE)에 있습니다. ECC에서 가져온 부분은 계속 MIT License를 따릅니다([`LICENSE-ECC`](skills/plan-efficient/LICENSE-ECC)).
