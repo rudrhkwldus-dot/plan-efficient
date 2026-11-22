@@ -6,6 +6,8 @@
 cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 [ -f "$cfg/usage-bridge/usage-snapshot.sh" ] && exec bash "$cfg/usage-bridge/usage-snapshot.sh"
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-[ -s "$dir/statusline-original.txt" ] && exec bash -c "$(cat "$dir/statusline-original.txt")"
+for f in "$dir/statusline-original.txt" "${PLAN_EFFICIENT_HOME:-$cfg/plan-efficient}/statusline-original.txt"; do
+  [ -s "$f" ] && exec bash -c "$(cat "$f")"
+done
 cat >/dev/null
 exit 0

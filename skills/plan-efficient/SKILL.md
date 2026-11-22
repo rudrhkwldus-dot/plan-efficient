@@ -1,216 +1,192 @@
 ---
 name: plan-efficient
-description: '/plan의 효율 버전. 정확도를 지키면서 5시간 사용량 안에 끝나는 실행 계획을 짜고, 예상 토큰(양과 5h 한도 대비 %), 예상 시간, 단계별 추천 모델과 effort를 함께 보여 준다. 사용자가 /plan-efficient 를 입력하거나 "효율적으로 계획 짜 줘", "토큰 아끼는 계획", "5시간 안에 끝나는 계획"이라고 하면 쓴다. 계획만 세우고, 사용자가 승인하기 전에는 코드나 파일을 건드리지 않는다.'
-argument-hint: "<작업 설명 | path/to/*.prd.md> [--used N%] [--budget low|med|high]"
+description: 'An efficient /plan for Claude Code. Builds an implementation plan that keeps the checks that matter, skips pointless retry loops, and shows expected usage (tokens and % of the 5-hour and weekly limits, read from the server when available), a time range, and the recommended model and effort per step. Use when the user types /plan-efficient or asks for an efficient plan, a token-saving plan, or a plan that fits the 5-hour limit or a time limit (e.g. "효율적으로 계획 짜 줘", "토큰 아끼는 계획", "5시간 안에 끝나는 계획"). Plans only: no code or file changes before the user approves.'
+argument-hint: "<task | path/to/*.prd.md> [--used N%] [--time 30m] [--budget low|med|high]"
 ---
 
 # plan-efficient
 
-구현 전에 계획을 세운다. 순서는 요구사항 다시 쓰기 → 코드베이스 근거 찾기 → 단계 나누기(단계 사이 의존 관계 포함) → 위험 → **승인 대기**이다.
-여기에 세 가지를 더한다.
+Plan before implementing: restate the requirements → find evidence in the codebase → split into stages (with dependencies) → risks → **wait for approval**. On top of that, give:
 
-1. 정확도와 효율의 균형을 맞춘 경로
-2. 예상 토큰(양과 5h 한도 대비 %)과 예상 시간
-3. 단계별 모델과 effort 추천
+1. a route that balances correctness and cost
+2. expected usage (tokens, % of the 5-hour and weekly limits) and a time range
+3. a model and effort level per stage
 
-다른 플러그인 없이 이 폴더만으로 실행된다. 상태줄 연결(`bridge/install.sh`)을 설치하면 지금 사용량을 서버 값으로 읽고, 설치하지 않아도 추정치로 동작한다. 이 연결은 `~/.claude/usage-bridge/`에 깔리고 smart-work와 같이 쓴다(한쪽만 지워도 다른 쪽은 그대로 동작한다).
+Write the plan in the user's language.
 
-**승인 전에는 코드나 파일을 수정하지 않는다.** 서브에이전트는 기본으로 쓰지 않는다. 계획 자체가 토큰을 많이 쓰면 안 된다.
+## Hard rules
 
-## 인자
+- **No code or file changes before approval.** The only exceptions are this skill's own state in `{state_dir}` (settings and calibration log) and saving the plan when the user asked for that up front.
+- No subagents by default. Planning itself must stay cheap.
+- Unknown stays unknown. Never treat missing usage as 0%. Never invent file paths, patterns, model names, or settings.
+- Ask only for information that changes the plan. Anything else becomes a stated assumption.
 
-- `<작업 설명>`: 계획할 작업. 입력에 따라 이렇게 한다.
+## Inputs
 
-  | 입력 | 동작 |
-  |---|---|
-  | `*.prd.md` 경로 | PRD를 읽고 아직 안 끝난(pending) 첫 마일스톤을 골라 계획한다. 계획은 `.claude/plans/{kebab-case-이름}.plan.md`에 쓰고 경로를 알려 준다. PRD에 `Delivery Milestones` 표가 있으면 고른 행만 `in-progress`로 바꾸고 `Plan` 칸에 계획 파일 경로를 적는다 |
-  | 다른 마크다운 경로 | 참고 자료로 읽고 계획은 대화에 쓴다 |
-  | 일반 문장 | 계획을 대화에 쓴다 |
-  | 비어 있음 | 무엇을 계획할지 묻는다 |
-
-- `--used N%`: 지금 5h 창에서 이미 쓴 비율. 서버 값(0단계)이 있으면 쓰지 않는다. 둘 다 없으면 0%로 보고, 출력에 "현재 사용량 미입력"이라고 적는다.
-- `--budget low|med|high`: 모델 추천에 쓰는 예산 등급. 없으면 5h 남은 비율로 정한다(남은 양 < 30% → low, 30~70% → med, > 70% → high). 7d 사용량이 80% 이상이면 한 등급 낮춘다.
-
-## 0단계: 예산 설정과 현재 사용량 읽기
-
-이 스킬 폴더(이 SKILL.md가 있는 폴더)를 `{dir}`이라 한다.
-
-1. `{dir}/budget.md`를 읽는다. `plan:`이 `unset`이면 요금제(Pro / Max 5x / Max 20x)를 **한 번만** 묻고 `budget.md`에 적는다.
-2. `bash "{dir}/bridge/install.sh" usage plan-efficient`를 **한 번** 실행한다. `key=value` 줄이 나온다.
-
-   | 결과 | 처리 |
-   |---|---|
-   | `snapshot=ok`이고 `age_sec` ≤ 900 | 서버 값을 쓴다. `five_hour_pct`, `seven_day_pct`가 지금 사용량이다 |
-   | `snapshot=ok`이고 `age_sec` > 900 | 오래된 값이다. 값은 보여 주되 "N분 전 값"이라고 적고, `--used`가 있으면 그것을 쓴다 |
-   | `*_resets_in_sec` ≤ 0 | 저장한 뒤 그 창이 리셋됐다. 그 한도는 0%로 본다 |
-   | `snapshot=unparsed` | jq/Python이 없는 PC다. `file=`의 JSON을 직접 읽어 `raw.rate_limits`를 쓴다. 나이는 `now - ts`로 계산한다 |
-   | `snapshot=none`이고 `status=installed` | 설치 직후다. "다음 응답부터 서버 값 표시"라고 적고 추정으로 진행한다 |
-   | `status=legacy` | 1.1에서 이 폴더 안에 깐 옛 연결이다. 이미 동의한 연결이므로 "공용 연결로 옮깁니다"라고 한 줄 알리고 `bash "{dir}/bridge/install.sh" install plan-efficient`를 실행한 뒤 출력을 보여 준다 |
-   | `status=not-installed` 또는 `no-settings` | 아래 3번 |
-
-3. 설치 제안: `budget.md`의 `statusline:`이 `unset`일 때만 **한 번** 묻는다.
-   > 정확한 사용량(서버가 계산한 5h·7d %)을 보려면 상태줄 연결을 설치해야 합니다. `settings.json`을 백업한 뒤 지금 상태줄을 그대로 감싸서 화면은 바뀌지 않습니다. 설치할까요?
-
-   - 예 → `bash "{dir}/bridge/install.sh" install plan-efficient`를 실행하고 출력(백업 경로 포함)을 그대로 보여 준다. `statusline: installed`로 적는다.
-   - 아니요 → `statusline: declined`로 적고 다시 묻지 않는다. `--used`와 추정으로 진행한다.
-   - 실행 결과가 수동 안내(jq/Python 없음)면 그 안내를 보여 주고 추정으로 진행한다.
-
-API 키 사용자나 세션 첫 응답 전에는 서버 값이 없다. 이때는 출력에 "서버 값 없음"이라고 적고 지금까지처럼 추정한다.
-
-## 1단계: 근거 찾기(정찰 예산 제한)
-
-계획을 쓰기 전에, 구현이 따라야 할 기존 관례를 찾는다. 해당하는 항목마다 대표 예시 하나를 `파일:줄`과 함께 적는다.
-
-| 항목 | 찾을 것 |
+| Input | What to do |
 |---|---|
-| 이름 | 바꿀 영역의 파일, 함수, 타입, 명령 이름 짓는 방식 |
-| 오류 처리 | 실패를 던지는지, 돌려주는지, 기록하는지 |
-| 로그 | 수준, 형식, 무엇을 남기는지 |
-| 데이터 접근 | 저장소, 서비스, 쿼리, 파일 다루는 방식 |
-| 테스트 | 위치, 프레임워크, 픽스처, 단언 방식 |
+| `*.prd.md` path | Plan the first pending milestone (or the one the user names). Write the plan in chat. **Propose** saving it to `.claude/plans/{kebab-case-name}.plan.md` and, if the PRD has a `Delivery Milestones` table, marking only that row `in-progress` with the plan path. Write both after approval, or right away if the user asked to save up front |
+| other Markdown path | Read it as reference; plan in chat |
+| plain text | Plan in chat |
+| empty | Ask what to plan |
 
-비슷한 코드가 없으면 없다고 쓴다. 패턴을 지어내지 않는다. 저장소가 없는 작업(문서, 자료 정리 등)이면 이 단계는 건너뛴다.
+- `--used N%`: share of the current 5-hour window already used. Ignored when server values exist. If neither exists, current usage is **unknown**: skip the "after" values and the 80% check, and show only what this plan will use.
+- `--time 30m` (or "within 30 minutes" in the request): time available. The plan must fit it: cut optional scope or set a checkpoint.
+- `--budget low|med|high`: budget level for model choice. Default from 5-hour remaining: < 30% → low, 30–70% → med, > 70% → high. Unknown usage → med. Weekly usage ≥ 80% → one level lower.
 
-정찰에는 다음 제한을 둔다.
+## Step 0: settings and current usage
 
-- 검색은 Grep/Glob부터 한다. 파일 전체를 읽는 것은 바꿀 파일과, 따라 할 대표 예시 1개까지로 한다.
-- 큰 파일은 필요한 줄 범위만 읽는다. 같은 파일을 다시 읽지 않는다.
-- 정찰 단계 상한: 도구 호출 약 10회. 넘을 것 같으면 모르는 부분을 "가정"으로 적고 계획에서 검증 단계로 넘긴다.
+`{dir}` is the folder containing this SKILL.md. Run **once**, no retries:
 
-## 2단계: 경로 고르기(정확도와 효율의 균형)
-
-'적절히'는 다음 세 조건을 모두 만족하는 경로를 말한다.
-
-| 조건 | 판단 기준 |
-|---|---|
-| 5h 안에 끝남 | 예상 사용량 + `--used`가 5h 한도의 **80% 이하**. 넘으면 체크포인트에서 끊어 세션을 나눈다 |
-| 의미 없는 반복이 없음 | 모든 반복 단계에 완료 기준, 재시도 상한, 중단 조건이 있다 |
-| 정확도 확보 | 틀리면 비싼 지점(설계 결정, 데이터 변환, 공개 동작)마다 검증이 하나씩 있다 |
-
-후보 경로가 둘 이상이면 표 하나로 비교하고 하나를 추천한다. 비교 항목은 예상 토큰, 시간, 정확도 위험이다. 뻔하면 비교 없이 추천만 쓴다.
-
-### 반복 방지 규칙(계획에 반드시 반영)
-
-- **재시도 상한**: 같은 방법은 최대 2번 시도한다. 2번 실패하면 원인 가설을 바꾸거나 사용자에게 묻는다. 같은 명령을 바꾼 것 없이 다시 돌리지 않는다.
-- **싼 검증 먼저**: 타입체크·단위 테스트 1개·작은 샘플로 먼저 확인하고, 전체 테스트나 전체 데이터 처리는 마지막에 한 번 한다.
-- **폴링 금지**: 오래 걸리는 작업은 백그라운드로 돌리고 끝나면 알림을 받는다.
-- **서브에이전트는 이득일 때만**: 하나 띄울 때마다 기본 맥락만 약 20k 토큰을 쓴다. 메인 맥락을 크게 아끼거나 진짜 병렬일 때만 쓴다.
-- **정확도를 위해 남길 것**: 최종 검증, 사용자가 보는 결과물 확인, 되돌리기 어려운 작업 전 확인은 줄이지 않는다.
-
-## 3단계: 토큰과 시간 추정
-
-단계마다 아래 값을 어림한 뒤 더한다. **추정치이며 보정 전에는 오차가 ±50% 정도**라고 출력에 적는다.
-
-| 항목 | 어림값 |
-|---|---|
-| 도구 호출 1회(호출 + 결과 + 짧은 판단) | 약 2k 토큰 |
-| 파일 읽기 | 줄 수 × 약 12 토큰 |
-| 파일 쓰기/수정 | 만드는 줄 수 × 약 15 토큰 |
-| 맥락 누적 보정 | 위 합계 × 1.5(호출 30회 이하) / × 2.5(30~80회) / × 4(80회 초과) |
-| 서브에이전트 1개 | 약 20k + 그 에이전트 작업량 |
-| 계획 단계 자체 | 약 15~30k |
-
-모델별 한도 소모 가중치(Sonnet = 1): **haiku 0.33, sonnet 1.0, opus 1.67** (API 단가 비율 기준).
-- `5h 예상 % = Σ(단계 토큰 × 모델 가중치) ÷ 5h_budget_tokens`
-- `7d 예상 % = 같은 합계 ÷ 7d_budget_tokens`. `7d_budget_tokens`가 `unknown`이면(보정 전) 7d는 지금 값만 쓰고 예상 칸은 "보정 전"으로 둔다.
-
-시간: `도구 호출 수 × 약 30초 + 빌드·테스트·스크립트 실행 시간 + 사용자 확인 대기(따로 표시)`.
-
-예상 시간이 5h 리셋까지 남은 시간보다 길면, 리셋 이후 작업은 새 창에서 계산된다고 적는다. 끊을 지점은 리셋 시각에 맞춰 고른다.
-
-## 4단계: 모델과 effort 추천
-
-작업의 복잡도, 위험, 예산 등급을 보고 모델 등급을 고른다.
-
-| 모델 | 언제 |
-|---|---|
-| haiku | 정해진, 위험이 낮은 기계적 변경 |
-| sonnet | 구현과 리팩터의 기본값 |
-| opus | 설계, 깊은 리뷰, 요구가 모호할 때 |
-
-예산 등급이 `low`이면 한 단계 낮은 모델을 먼저 검토하고, 정확도 위험이 크면 그대로 둔다. 전체 기본 모델 하나(확신도 높음/중간/낮음, 고른 이유, 처음 시도가 실패하면 바꿀 대체 모델)를 정한 뒤, 같은 기준으로 단계별로 나눈다.
-
-effort는 이렇게 고른다.
-
-| effort | 언제 |
-|---|---|
-| low | 이름 바꾸기, 포맷 정리, 정해진 변환 |
-| medium | 일반 구현, 테스트 작성(기본값) |
-| high | 원인이 불분명한 디버깅, 설계 결정, 여러 파일에 걸친 리팩터 |
-| xhigh / max | 위로도 두 번 실패했을 때만. 토큰이 크게 늘어난다고 적는다 |
-
-모델이나 effort가 바뀌는 단계에는 바꾸는 방법(`/model` 등)을 한 줄 적는다. 바꾸는 이득이 작으면(단계가 짧으면) 바꾸지 말라고 쓴다.
-
-## 출력 형식
-
-한국어로 쓴다. 아래 순서를 지킨다.
-
-```markdown
-# 효율 계획: {작업 이름}
-
-## 요구사항
-- ...
-
-## 근거(따라 할 패턴)
-| 항목 | 위치 | 패턴 |
-|---|---|---|
-
-## 추천 경로
-{한두 문장: 왜 이 경로가 정확도와 효율의 균형점인지. 뺀 것과 남긴 검증}
-
-## 단계
-### 1단계: {이름}  ·  {모델} / effort {수준}
-- 할 일: ...
-- 완료 기준: {무엇이 확인되면 끝인지}
-- 재시도 상한 / 중단 조건: ...
-- 예상: 약 {N}k 토큰 · {M}분
-
-## 예상 사용량
-| 단계 | 모델 | effort | 토큰 | 가중 토큰 | 시간 |
-|---|---|---|---|---|---|
-| 합계 | | | {N}k | {W}k | {H}시간 {M}분 |
-
-| 한도 | 지금 | 이 계획 예상 | 끝나면 | 리셋까지 |
-|---|---|---|---|---|
-| 5h | {U5}% | +{P5}% (추정) | 약 {U5+P5}% | {남은 시간} |
-| 7d | {U7}% | +{P7}% (추정 / 보정 전) | 약 {U7+P7}% | {남은 시간} |
-
-- 지금 값 출처: {서버 값(N분 전 저장) / --used 입력 / 서버 값 없음}
-- 추정 기준: {요금제}, 5h 한도 {B} 토큰(보정 {N}회), 오차 ±{X}%
-- 80%를 넘으면: {어느 단계 뒤에서 끊을지와 다음 세션에서 이어 갈 내용}
-- 7d가 먼저 찰 것 같으면: {그 사실과 줄일 단계}
-
-"지금"은 서버 값이면 그대로 쓰고, 소수점은 버린다. "리셋까지"는 `*_resets_in_sec`를 "1시간 20분", "3일 4시간"처럼 바꿔 쓰고, 값이 없으면 "—"로 둔다.
-
-## 모델 추천
-- 기본: {모델} (확신도 {높음/중간/낮음}): {이유}
-- 대체: {모델}: {언제 바꿀지}
-
-## 위험
-| 위험 | 가능성 | 대응 |
-|---|---|---|
-
-**승인 대기**: 이 계획대로 진행할까요? (예 / 수정: ... / 다른 경로: ...)
+```bash
+bash "{dir}/install.sh" usage
 ```
 
-## 실행 후 보정(사용자가 승인해 실행한 경우)
+- If it can't run (no bash, not Claude Code, permission denied), continue with estimates only and write "server values unavailable". Don't look for other sources.
+- It prints `key=value` lines, including `state_dir`. Read `{state_dir}/budget.md`.
+- **Normal case**: `status=installed`, `snapshot=ok`, `age_sec` ≤ 900, `settings=present`, and `plan:` is set. Use `five_hour_pct`, `seven_day_pct`, and `*_resets_in_sec`. A window with `resets_in_sec` ≤ 0 has reset since the snapshot: treat it as 0%.
+- **Anything else** (first run, `plan: unset`, not installed, stale or unparsed snapshot, `migrated=`): read `references/setup.md` and follow it.
 
-계획을 세울 때 읽은 서버 값(`five_hour_pct`, `seven_day_pct`, `cost_usd`, `session_id`, 리셋까지 남은 시간)을 계획 끝에 한 줄로 적어 둔다(시작 기록).
+## Step 1: evidence (bounded)
 
-작업이 끝나면 `bash "{dir}/bridge/install.sh" usage plan-efficient`를 다시 한 번 실행해 차이(Δ)를 구하고, 예상 대비 실제(도구 호출 수, 걸린 시간, 5h·7d Δ%)를 한 줄로 보고한다.
+Find the conventions the change must follow. For each that applies, give one example with `file:line`.
 
-보정은 다음을 모두 만족할 때만 한다. 하나라도 어긋나면 기록하지 않고 이유를 한 줄로 적는다.
+| Item | Look for |
+|---|---|
+| Naming | how files, functions, types, commands are named in the area |
+| Errors | thrown, returned, or logged |
+| Logging | level, format, what gets logged |
+| Data access | repositories, services, queries, file handling |
+| Tests | location, framework, fixtures, assertion style |
 
-- 시작과 끝 모두 서버 값이고, 끝 값이 15분 안에 저장된 것이다
-- 그 사이에 리셋이 없었다(끝의 `resets_in_sec`가 시작 때 값에서 걸린 시간을 뺀 값과 대략 같다)
-- 5h Δ가 3%p 이상이다(그보다 작으면 반올림 오차가 크다)
+If nothing similar exists, say so. Skip this step for tasks without a repository.
 
-조건을 만족하면 `budget.md` 보정 기록에 한 줄을 넣는다. 실제 한도는 `이번 작업의 예상 가중 토큰 ÷ (Δ% ÷ 100)`으로 역산하고, 기존 값과 평균을 낸다(처음이면 그 값을 그대로 쓴다). 7d도 같은 방식으로 `7d_budget_tokens`를 채운다. 같은 세션이면 `cost_usd` 차이도 함께 적는다(나중에 비용 기준 보정에 쓴다).
+Limits: search with Grep/Glob first. Read whole files only for the files to change plus one representative example. For large files, read line ranges. Re-read a file only if it changed or the earlier range was not enough. About 10 tool calls; beyond that, write the gap as an assumption and turn it into a verification stage.
 
-다른 세션이나 claude.ai에서 같은 시간에 쓴 양도 Δ에 들어간다. 사용자가 동시에 다른 작업을 했다고 하면 보정하지 않는다.
+## Step 2: route
 
-서버 값이 없으면 예전처럼 사용자가 알려 준 실제 %로 보정한다.
+A good route meets all of these:
 
-## 출처
+| Condition | Test |
+|---|---|
+| Fits the 5-hour window | current + expected ≤ **80%** of the 5-hour limit; otherwise split at a checkpoint. If current usage is unknown, don't judge; for large plans just mark where to split |
+| Fits `--time` | when given |
+| No pointless loops | every repeating stage has a done condition, a retry cap, and a stop condition |
+| Correct | a check at each point that is expensive to get wrong (design decisions, data transforms, public behavior) |
 
-이 스킬은 [ECC](https://github.com/affaan-m/ECC)의 `/plan` 명령과 `/model-route` 명령(MIT License, Copyright (c) 2026 Affaan Mustafa)을 바탕으로 만든 변형이다. 원본의 계획 절차, 입력 방식, 패턴 찾기 항목, 모델 등급 기준을 옮겨 고쳐 썼다. 원본 라이선스 전문은 같은 폴더의 `LICENSE-ECC`에 있다.
+Compare routes in one table (tokens, time, correctness risk) only when there is a real tradeoff; otherwise just recommend one.
+
+Rules every plan must include:
+
+- **Retry cap**: at most 2 attempts per approach. After 2 failures, change the hypothesis or ask the user. Never rerun an unchanged command.
+- **Cheap checks first**: type check, one unit test, or a small sample before the full suite or full data run, which happens once at the end.
+- **No polling**: run long jobs in the background and get notified. If that isn't supported, use a bounded wait.
+- **Subagents only when they pay off**: each costs a noticeable amount of context (roughly 20k tokens, not measured). Use them only for real parallelism or a large saving in main context.
+- **Keep for correctness**: final verification, checking what the user will see, and confirmation before irreversible actions. When the budget is tight, cut optional scope or split the work; never silently drop these.
+
+## Step 3: estimate
+
+Estimate each stage, then add:
+
+| Item | Rough value |
+|---|---|
+| Tool call (call + result + short reasoning) | ~2k tokens |
+| Reading a file | lines × ~12 tokens |
+| Writing/editing | lines written × ~15 tokens |
+| Context growth | total × 1.5 (≤ 30 calls) / × 2.5 (30–80) / × 4 (> 80) |
+| Subagent | ~20k + its own work |
+| Planning | only the part after Step 0 (the server value already includes earlier usage) |
+
+Model weights (Sonnet = 1): **haiku 0.33, sonnet 1.0, opus 1.67**. These are an **assumption** borrowed from API price ratios; nothing official says subscription limits scale this way.
+
+- 5-hour % = Σ(stage tokens × weight) ÷ `5h_budget_tokens`
+- Weekly % = same sum ÷ `7d_budget_tokens`. If that is `unknown`, show only the current weekly value and write "not calibrated" for the estimate.
+- State the basis: "calibrated: N samples, same model" or "uncalibrated starting guess, error range unknown". Never attach a ±N% without data. With 2+ samples, show the estimate as a range.
+
+Time: tool calls × 20–40 s + build/test/script time, as a range. Show waits for user approval separately. For stages that can run in parallel, use the longest chain and say so. If the work runs past the 5-hour reset, note that work after the reset counts in a new window, and place checkpoints around the reset.
+
+## Step 4: model and effort
+
+| Model | When |
+|---|---|
+| haiku | fixed, low-risk, mechanical changes |
+| sonnet | default for implementation and refactoring |
+| opus | design, deep review, ambiguous requirements |
+
+With budget `low`, consider one model lower first, unless the correctness risk is high. Pick one default model (confidence high/medium/low, the reason, and a fallback if the first attempt fails), then assign per stage by the same rules.
+
+| Effort | When |
+|---|---|
+| low | renames, formatting, fixed transforms |
+| medium | normal implementation, writing tests (default) |
+| high | unclear-cause debugging, design decisions, multi-file refactors |
+| xhigh / max | only after two failures at a lower level; note the large token increase |
+
+Where the model or effort changes, add one line on how to switch (e.g. `/model`). If the stage is short and the gain is small, say not to switch.
+
+## Output
+
+Use this order. Translate headings into the user's language. For small tasks, drop empty parts.
+
+```markdown
+# Efficient plan: {task}
+
+## Requirements
+- ...
+
+## Evidence (patterns to follow)
+| Item | Location | Pattern |
+|---|---|---|
+
+## Recommended route
+{1–2 sentences: why this balances correctness and cost; what was cut and which checks stay}
+
+## Stages
+### Stage 1: {name} · {model} / effort {level}
+- Do: ...
+- Done when: ...
+- Retry cap / stop condition: ...
+- Estimate: ~{N}k tokens · {M1}–{M2} min
+
+## Expected usage
+| Stage | Model | Effort | Tokens | Weighted | Time |
+|---|---|---|---|---|---|
+| Total | | | {N}k | {W}k | {M1}–{M2} min |
+
+| Limit | Now | This plan | After | Resets in |
+|---|---|---|---|---|
+| 5h | {U5}% | +{P5}% (est.) | ~{U5+P5}% | {time} |
+| Weekly | {U7}% | +{P7}% (est. / not calibrated) | ~{U7+P7}% | {time} |
+
+- Current values from: {server (saved N min ago) / --used / unknown}
+- Estimate basis: {calibrated: N samples, range P_min–P_max% / uncalibrated: {plan} starting guess, error range unknown}
+- Over 80%: {which stage to stop after, and what the next session continues}
+- Weekly limit first: {if so, what to cut}
+
+## Model
+- Default: {model} (confidence {high/medium/low}): {reason}
+- Fallback: {model}: {when to switch}
+
+## Risks
+| Risk | Likelihood | Response |
+|---|---|---|
+
+**Awaiting approval**: proceed with this plan? (yes / change: ... / other route: ...)
+
+Start record: 5h {U5}% · weekly {U7}% · cost ${C} · session {id} · {time}
+```
+
+"Now" from the server: drop decimals. Unknown → "unknown" and "After" → "—". "Resets in" from `*_resets_in_sec`, written like "1 h 20 min" or "3 d 4 h"; missing → "—". Write the start record only when server values were used.
+
+## After approval and execution
+
+Report estimate vs actual in one line (tool calls, time, 5-hour and weekly change). If server values or a user-reported % are available, read `references/calibration.md` and follow it.
+
+## Revising and handing off
+
+- **Revising after a failure or scope change**: keep verified work, say what made the old plan wrong, and re-estimate only the remaining work. Separate what can be deferred from checks that must stay.
+- **Pausing or moving to a new session**: write a short handoff in chat: goal, verified work done, unresolved failures and attempt counts, remaining stages, required checks, next action. Save it to a file only if the user asks.
+
+## Credits
+
+Based on the `/plan` and `/model-route` commands from [ECC](https://github.com/affaan-m/ECC) (MIT License, Copyright (c) 2026 Affaan Mustafa): the planning flow, input handling, pattern checklist, and model tiers were adapted. The full upstream license is in `LICENSE-ECC` in this folder.
