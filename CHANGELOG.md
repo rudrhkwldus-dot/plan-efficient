@@ -2,6 +2,14 @@
 
 English | [한국어](#한국어)
 
+## 1.2 (unreleased)
+
+### Added
+- **Shared usage connection** (`usage-bridge`), shared with [smartwork](https://github.com/rudrhkwldus-dot/smartwork). Both skills ship the same `bridge/` folder and install it once to `~/.claude/usage-bridge/`. Installing both never wraps the status line twice; removing one skill (or deleting its folder) keeps the other working; the newer bridge version upgrades in place. Stop thresholds live in `~/.claude/usage-bridge/config`.
+
+### Changed
+- plan-efficient now uses `bridge/install.sh`. The old `install.sh` and `usage-snapshot.sh` stay as thin forwarders, and a 1.1 connection is moved to the shared one automatically on the next run.
+
 ## 1.1 (2026-11-23)
 
 ### Added
@@ -27,6 +35,14 @@ English | [한국어](#한국어)
 ---
 
 ## 한국어
+
+### 1.2 (미출시)
+
+#### 추가
+- **공용 사용량 연결**(`usage-bridge`). [smartwork](https://github.com/rudrhkwldus-dot/smartwork)와 같이 씁니다. 두 스킬에 같은 `bridge/` 폴더가 들어 있고, 처음 설치할 때 `~/.claude/usage-bridge/`에 한 번만 깔립니다. 둘 다 깔아도 상태줄을 두 번 감싸지 않고, 한쪽을 지우거나 폴더를 삭제해도 다른 쪽은 그대로 동작합니다. 새 버전이 들어오면 그 자리에서 업데이트됩니다. 멈춤 기준은 `~/.claude/usage-bridge/config`에 있습니다.
+
+#### 변경
+- plan-efficient가 `bridge/install.sh`를 씁니다. 예전 `install.sh`와 `usage-snapshot.sh`는 넘겨주기만 하는 파일로 남겨 두었고, 1.1의 연결은 다음 실행 때 공용 연결로 자동으로 옮겨집니다.
 
 ### 1.1 (2026-11-23)
 

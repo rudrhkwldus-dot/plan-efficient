@@ -13,7 +13,7 @@ argument-hint: "<작업 설명 | path/to/*.prd.md> [--used N%] [--budget low|med
 2. 예상 토큰(양과 5h 한도 대비 %)과 예상 시간
 3. 단계별 모델과 effort 추천
 
-다른 플러그인 없이 이 폴더만으로 실행된다. 상태줄 연결(`install.sh`)을 설치하면 지금 사용량을 서버 값으로 읽고, 설치하지 않아도 추정치로 동작한다.
+다른 플러그인 없이 이 폴더만으로 실행된다. 상태줄 연결(`bridge/install.sh`)을 설치하면 지금 사용량을 서버 값으로 읽고, 설치하지 않아도 추정치로 동작한다. 이 연결은 `~/.claude/usage-bridge/`에 깔리고 smart-work와 같이 쓴다(한쪽만 지워도 다른 쪽은 그대로 동작한다).
 
 **승인 전에는 코드나 파일을 수정하지 않는다.** 서브에이전트는 기본으로 쓰지 않는다. 계획 자체가 토큰을 많이 쓰면 안 된다.
 
@@ -36,7 +36,7 @@ argument-hint: "<작업 설명 | path/to/*.prd.md> [--used N%] [--budget low|med
 이 스킬 폴더(이 SKILL.md가 있는 폴더)를 `{dir}`이라 한다.
 
 1. `{dir}/budget.md`를 읽는다. `plan:`이 `unset`이면 요금제(Pro / Max 5x / Max 20x)를 **한 번만** 묻고 `budget.md`에 적는다.
-2. `bash "{dir}/install.sh" usage`를 **한 번** 실행한다. `key=value` 줄이 나온다.
+2. `bash "{dir}/bridge/install.sh" usage plan-efficient`를 **한 번** 실행한다. `key=value` 줄이 나온다.
 
    | 결과 | 처리 |
    |---|---|
@@ -45,12 +45,13 @@ argument-hint: "<작업 설명 | path/to/*.prd.md> [--used N%] [--budget low|med
    | `*_resets_in_sec` ≤ 0 | 저장한 뒤 그 창이 리셋됐다. 그 한도는 0%로 본다 |
    | `snapshot=unparsed` | jq/Python이 없는 PC다. `file=`의 JSON을 직접 읽어 `raw.rate_limits`를 쓴다. 나이는 `now - ts`로 계산한다 |
    | `snapshot=none`이고 `status=installed` | 설치 직후다. "다음 응답부터 서버 값 표시"라고 적고 추정으로 진행한다 |
+   | `status=legacy` | 1.1에서 이 폴더 안에 깐 옛 연결이다. 이미 동의한 연결이므로 "공용 연결로 옮깁니다"라고 한 줄 알리고 `bash "{dir}/bridge/install.sh" install plan-efficient`를 실행한 뒤 출력을 보여 준다 |
    | `status=not-installed` 또는 `no-settings` | 아래 3번 |
 
 3. 설치 제안: `budget.md`의 `statusline:`이 `unset`일 때만 **한 번** 묻는다.
    > 정확한 사용량(서버가 계산한 5h·7d %)을 보려면 상태줄 연결을 설치해야 합니다. `settings.json`을 백업한 뒤 지금 상태줄을 그대로 감싸서 화면은 바뀌지 않습니다. 설치할까요?
 
-   - 예 → `bash "{dir}/install.sh" install`을 실행하고 출력(백업 경로 포함)을 그대로 보여 준다. `statusline: installed`로 적는다.
+   - 예 → `bash "{dir}/bridge/install.sh" install plan-efficient`를 실행하고 출력(백업 경로 포함)을 그대로 보여 준다. `statusline: installed`로 적는다.
    - 아니요 → `statusline: declined`로 적고 다시 묻지 않는다. `--used`와 추정으로 진행한다.
    - 실행 결과가 수동 안내(jq/Python 없음)면 그 안내를 보여 주고 추정으로 진행한다.
 
@@ -196,7 +197,7 @@ effort는 이렇게 고른다.
 
 계획을 세울 때 읽은 서버 값(`five_hour_pct`, `seven_day_pct`, `cost_usd`, `session_id`, 리셋까지 남은 시간)을 계획 끝에 한 줄로 적어 둔다(시작 기록).
 
-작업이 끝나면 `bash "{dir}/install.sh" usage`를 다시 한 번 실행해 차이(Δ)를 구하고, 예상 대비 실제(도구 호출 수, 걸린 시간, 5h·7d Δ%)를 한 줄로 보고한다.
+작업이 끝나면 `bash "{dir}/bridge/install.sh" usage plan-efficient`를 다시 한 번 실행해 차이(Δ)를 구하고, 예상 대비 실제(도구 호출 수, 걸린 시간, 5h·7d Δ%)를 한 줄로 보고한다.
 
 보정은 다음을 모두 만족할 때만 한다. 하나라도 어긋나면 기록하지 않고 이유를 한 줄로 적는다.
 
