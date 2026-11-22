@@ -2,13 +2,22 @@
 
 English | [한국어](#한국어)
 
-## 1.2 (unreleased)
+## 1.2 (2026-11-23)
 
-### Added
-- **Shared usage connection** (`usage-bridge`), shared with [smartwork](https://github.com/rudrhkwldus-dot/smartwork). Both skills ship the same `bridge/` folder and install it once to `~/.claude/usage-bridge/`. Installing both never wraps the status line twice; removing one skill (or deleting its folder) keeps the other working; the newer bridge version upgrades in place. Stop thresholds live in `~/.claude/usage-bridge/config`.
+Merges 1.1 with ideas from a separate review of the skill.
 
 ### Changed
-- plan-efficient now uses `bridge/install.sh`. The old `install.sh` and `usage-snapshot.sh` stay as thin forwarders, and a 1.1 connection is moved to the shared one automatically on the next run.
+- **Instructions are now in English** and split up: `SKILL.md` holds the core workflow (about 45% fewer tokens per run, rough estimate); first-run setup (`references/setup.md`) and calibration (`references/calibration.md`) are read only when needed. Plans are written in the user's language.
+- **Settings live outside the skill folder.** `budget.md` moves to `~/.claude/plan-efficient/`; the status line connection, saved usage, and your original status line command move to the **shared usage connection** in `~/.claude/usage-bridge/`, which [smartwork](https://github.com/rudrhkwldus-dot/smartwork) uses too. Updating or deleting the skill no longer erases settings or breaks the status line. Coming from 1.1, everything is moved automatically on the next run.
+- **Shared usage connection.** Both skills ship the same `bridge/` folder and install it once. Installing both never wraps the status line twice; uninstalling one only unregisters it; the newer bridge version upgrades in place. `install.sh` and `usage-snapshot.sh` in the skill folder now just forward to it.
+- Missing current usage is **unknown**, not 0%. The "after" value and the 80% check are skipped, and the budget level defaults to medium.
+- With a PRD, the plan file and PRD status change are **proposed** and written after approval (or right away if you asked to save up front).
+- No more "±50%": plan defaults and model weights are labeled as unverified assumptions. Calibration rejects negative changes, compares only runs with the same main model, needs 2+ samples, and then shows the estimate as a range.
+
+### Added
+- `--time` (or "within 30 minutes"): fit the plan to the time you have.
+- Time estimates as a range; guidance for revising a plan after a failure and handing off to a new session.
+- If `install.sh` can't run (no bash, another agent), the skill continues with estimates instead of failing.
 
 ## 1.1 (2026-11-23)
 
@@ -39,13 +48,22 @@ English | [한국어](#한국어)
 
 ## 한국어
 
-### 1.2 (미출시)
+### 1.2 (2026-11-23)
 
-#### 추가
-- **공용 사용량 연결**(`usage-bridge`). [smartwork](https://github.com/rudrhkwldus-dot/smartwork)와 같이 씁니다. 두 스킬에 같은 `bridge/` 폴더가 들어 있고, 처음 설치할 때 `~/.claude/usage-bridge/`에 한 번만 깔립니다. 둘 다 깔아도 상태줄을 두 번 감싸지 않고, 한쪽을 지우거나 폴더를 삭제해도 다른 쪽은 그대로 동작합니다. 새 버전이 들어오면 그 자리에서 업데이트됩니다. 멈춤 기준은 `~/.claude/usage-bridge/config`에 있습니다.
+1.1에 별도 검토에서 나온 아이디어를 합쳤습니다.
 
-#### 변경
-- plan-efficient가 `bridge/install.sh`를 씁니다. 예전 `install.sh`와 `usage-snapshot.sh`는 넘겨주기만 하는 파일로 남겨 두었고, 1.1의 연결은 다음 실행 때 공용 연결로 자동으로 옮겨집니다.
+**변경**
+- **지침을 영어로 바꾸고 나눴습니다.** `SKILL.md`에는 핵심 흐름만 두었고(실행할 때마다 토큰 약 45% 감소, 대략적인 추정), 첫 설정(`references/setup.md`)과 보정(`references/calibration.md`)은 필요할 때만 읽습니다. 계획은 사용자가 쓰는 언어로 나옵니다.
+- **개인 설정을 스킬 폴더 밖에 둡니다.** `budget.md`는 `~/.claude/plan-efficient/`로, 상태줄 연결·저장된 사용량·원래 상태줄 명령은 [smartwork](https://github.com/rudrhkwldus-dot/smartwork)와 같이 쓰는 **공용 사용량 연결**(`~/.claude/usage-bridge/`)로 옮깁니다. 스킬을 업데이트하거나 지워도 설정이 사라지거나 상태줄이 깨지지 않습니다. 1.1에서 올라오면 다음 실행 때 자동으로 옮깁니다.
+- **공용 사용량 연결.** 두 스킬에 같은 `bridge/` 폴더가 들어 있고 한 번만 깔립니다. 둘 다 깔아도 상태줄을 두 번 감싸지 않고, 한쪽을 제거하면 그 스킬의 등록만 지워지며, 새 버전이 들어오면 그 자리에서 업데이트됩니다. 스킬 폴더의 `install.sh`와 `usage-snapshot.sh`는 이제 공용 연결로 넘겨주기만 합니다.
+- 현재 사용량을 모르면 0%가 아니라 **"모름"**으로 봅니다. "끝나면" 값과 80% 판단은 건너뛰고, 예산 등급은 중간으로 둡니다.
+- PRD를 넣으면 계획 파일 저장과 PRD 상태 변경을 **제안**만 하고, 승인 뒤에 씁니다(처음부터 저장을 요청했으면 바로 씁니다).
+- "±50%" 표기를 없앴습니다. 요금제 기본값과 모델 가중치는 확인되지 않은 가정이라고 표시합니다. 보정은 음수 변화를 버리고, 주 모델이 같은 기록끼리만 비교하며, 2개 이상 모여야 예상치를 범위로 보여 줍니다.
+
+**추가**
+- `--time`("30분 안에"라고 말해도 됨): 쓸 수 있는 시간에 맞춰 계획합니다.
+- 시간 추정을 범위로 보여 줍니다. 실패 뒤 계획 수정과 새 세션으로 인계하는 방법을 넣었습니다.
+- `install.sh`를 실행할 수 없는 환경(bash 없음, 다른 에이전트)에서도 멈추지 않고 추정으로 진행합니다.
 
 ### 1.1 (2026-11-23)
 
